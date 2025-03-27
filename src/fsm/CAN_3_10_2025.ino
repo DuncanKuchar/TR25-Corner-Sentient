@@ -11,6 +11,10 @@ const int servo1Pin = A0;
 const int servo2Pin = 11;
 const int servo3Pin = 12;
 
+const int onOffPin = ;
+const int DRSPin = ;
+const int sensPin = ;
+
 // Neutral Position is 1500
 // Increase in pulse is more open
 // Decrease in pulse is more closed
@@ -42,8 +46,13 @@ const int precision = 2; // UPDATE when updating racecapture precision
   1 = accel Y
   2 = accel Z
   3 = TPS
+  4 = wheel speed
+  5 = brake pressure
+  6 = steering angle
 */
-double can_data[4];
+double can_data[6];
+short current_state;
+short next_state;
 
 void setup() {
   Serial.begin(115200);
@@ -61,6 +70,10 @@ void setup() {
     while(1) delay(10);
   }
   Serial.println("MCP2515 chip found");
+
+  pinMode(onOffPin, INPUT);
+  pinMode(DRSPin, INPUT);
+  pinMode(sensPin, INPUT);
 }
 
 void loop() {
@@ -105,13 +118,105 @@ void loop() {
       Serial.println("\nGot TPS value: " + String(can_data[3]));
     }
 
-    Serial.println();
-    int mapedValue = mapValue(can_data[3]);
-    servo1.writeMicroseconds(mapedValue);
-    servo3.writeMicroseconds(1850 - (mapedValue - 1150));
+    // At this point we have read the current CAN packet and can begin processing
+    nextState(); // Calculates next state
+    updateState(); // Updates the current state and addresses the servos if the state changed.
   }
   
 
+}
+
+short nextState() {
+  int on = digitalRead(onOffPin);
+  int low_drag = digitalRead(DRSPin);
+
+  double accel_x = can_data[0]
+  double accel_y = can_data[1]
+
+  double TPS = can_data[3]
+  double wheel_speed = can_data[4]
+  double brake_pressure = can_data[5]
+  double steering_angle = can_data[6]
+
+  switch (current_state) {
+    case 1: // Medium Downforce
+      if (!on) {
+        next_state = 0;
+      } else if (low_drag) {
+        next_state = 2;
+      } else if ((  brake_pressure > ???
+                  || accel_x > ???)
+                || (steering_angle > ???
+                  || accel_y > ???)
+                ) {
+        next_state = 0;
+      } else if (  accel_y < ???
+                && steering_angle < ???
+              ) {
+        next_state = 2;
+      }
+    break;
+
+    case 2: // DRS / Low Drag
+      // System disabled, should default to low drag
+      if (!on) {
+        next_state = 0;
+      } else if (!low_drag) {
+        if (   TPS < ???
+          && (steering_angle > ???
+            || ( brake_pressure > ???
+              || accel_x > ???
+              )
+            )
+          ) {
+          next_state = 0;
+        } else if (  wheel_speed > ???
+                  && ( accel_y > ???
+                    || steering_angle > ???
+                  )
+                ) {
+          next_state = 1;
+        }
+      }
+    break;
+
+    default: // Maximum Downforce
+      // If we're not on then we should do nothing
+      if (on) {
+        // If we're switched on and set to low drag, we should set our state to low drag
+        if (low_drag) {
+          next_state = 2;
+        } else if (  TPS > ???
+                  && steering_angle < ???
+                  && accel_y < ???
+                  && brake_pressure < ???) {
+          next_state = 2;
+        } else if ( wheel_speed > ??? 
+                  && ( accel_y < ???
+                    || steering_angle < ???
+                  )) {
+          next_state = 1;
+        }
+      }
+    break;
+  }
+}
+
+void updateState() { // Basic function to perform state updates.
+  if (current_state != next_state) { // If the state should change, change it and perform corresponding actions
+    current_state = next_state;
+    switch (current_state) {
+      case 1: // Medium Downforce
+        //Servos are set here
+      break;
+      case 2: // DRS / Low Drag
+        //Servos are set here
+      break;
+      default: // High Downforce
+        //Servos are set here
+      break;
+    }
+  }
 }
 
 void moveServo(Servo &servoNum, int from, int to) {
