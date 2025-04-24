@@ -1,5 +1,17 @@
 import pandas as pd
 import argparse as argp
+from collections import defaultdict as dd
+
+def number_duplicates(data):
+    counts = dd(int)
+    result = []
+    for item in data:
+        counts[item] += 1
+        if counts[item] > 1:
+            result.append(f"{item}{counts[item] - 1}")
+        else:
+            result.append(item)
+    return result
 
 def main(args):
     file_path = args.input_file
@@ -7,6 +19,8 @@ def main(args):
     with open(file_path, 'r') as file:
         header_line = file.readline().strip()
         columns = [segment.split('|')[0].strip('"') for segment in header_line.split(',')]
+
+    columns = number_duplicates(columns)
 
     df = pd.read_csv(file_path, skiprows=1, names=columns, delimiter=',', na_values=['', ' '])
 
@@ -24,4 +38,3 @@ if __name__ == "__main__":
     parser.add_argument("-o", "--output_file", required=False, default = None, help = "Path to the output file")
     args = parser.parse_args()
     main(args)
-

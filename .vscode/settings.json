@@ -1,0 +1,8 @@
+{
+    "files.associations": {
+        "wiring_private.h": "c",
+        "arduino.h": "c",
+        "istream": "cpp",
+        "ostream": "cpp"
+    }
+}
