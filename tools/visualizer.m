@@ -6,6 +6,8 @@ Speed=x.Speed__kph__0_0_150_0_10/3600;
 % Power=Accelx*650/32.2*2/3/1.667/2.11/2.75;
 ay = abs(x.AccelY__G___3_0_3_0_25);
 ax = x.AccelX__G___3_0_3_0_25;
+on = x.AA_On____0_0_1_0_1;
+lowdrag = x.AA_LowDrag____0_1_1_1;
 RPM = x.RPM____0_10000_25;
 CoolantTemp = x.EngineTemp__C__0_200_1;
 TPS = x.TPS_____0_0_100_0_25; % Import TPS using the correct name
@@ -13,7 +15,7 @@ brakepress = x.FrontBP__psi___5_0_5_0_25; % Import FrontBP as brakepress using t
 accel_x = ax;
 accel_y = ay;
 steering_angle = x.SteerAng__Degrees___145_145_25; % Import steering angle
-speed = x.Speed__kph__0_0_150_0_10; % Import speed in kph
+speed = x.WSFR__MPH__0_150_10; % Import speed in kph
 currentstate = 0;
 nextstate = 0;
 lpd = 1; % Process every line (data point)
@@ -22,7 +24,11 @@ for i = 1:length(lat) % Iterate through all data points
    currIndex = i; % The current index in state history is simply the loop index
    switch (currentstate)
         case 1
-            if (((brakepress(i) > 30) ...
+            if (on(i) == 0) 
+                nextstate = 0;
+            elseif (lowdrag(i) == 1)
+                nextstate = 2;
+            elseif (((brakepress(i) > 30) ...
                     || (accel_x(i) > 0.3)) ...
                 || ((steering_angle(i) > 40) ...
                     || (abs(accel_y(i)) > 1.1)))
@@ -32,28 +38,36 @@ for i = 1:length(lat) % Iterate through all data points
                 nextstate = 2;
             end
         case 2
-            if ((TPS(i) < 50) ... % This condition being lower causes the wings to open earlier at low speed high Gs
-                || (steering_angle(i) > 40) ... % Changed from && to || ?
-                        || (abs(accel_y(i)) > 1.1)) ... % New
-                    || ((brakepress(i) > 30) ...
-                        || (accel_x(i) > 0.3))
+            if (on(i) == 0)
                 nextstate = 0;
-            elseif ((speed(i) > 15) ...
-                    && (accel_y(i) > 0.7) ...
-                        || (steering_angle(i) > 20)) % This condition may be danger if we can't rely on steer angle
-                nextstate = 1;
+            elseif (lowdrag(i) == 0) 
+                if ((TPS(i) < 50) ... % This condition being lower causes the wings to open earlier at low speed high Gs
+                    || (steering_angle(i) > 40) ... % Changed from && to || ?
+                            || (abs(accel_y(i)) > 1.1)) ... % New
+                        || ((brakepress(i) > 30) ...
+                            || (accel_x(i) > 0.3))
+                    nextstate = 0;
+                elseif ((speed(i) > 15) ...
+                        && (accel_y(i) > 0.7) ...
+                            || (steering_angle(i) > 20)) % This condition may be danger if we can't rely on steer angle
+                    nextstate = 1;
+                end
             end
         otherwise
-            if ((TPS(i) > 50) ...
-                && (steering_angle(i) < 30) ...
-                && (accel_y(i) < 0.7) ...
-                && (brakepress(i) < 30))
-                nextstate = 2;
-            elseif ((speed(i) > 15) ...
-                    && (accel_y(i) < 1.1) ...
-                    && (steering_angle(i) < 30)) ... % Changed from || to &&
-                && ((brakepress(i) < 50) && (accel_x(i) < 0.4)) % Both New
-                nextstate = 1;
+            if (on(i) == 1)
+                if (lowdrag(i) == 1)
+                    next_state = 2;
+                elseif ((TPS(i) > 50) ...
+                    && (steering_angle(i) < 30) ...
+                    && (accel_y(i) < 0.7) ...
+                    && (brakepress(i) < 30))
+                    nextstate = 2;
+                elseif ((speed(i) > 15) ...
+                        && (accel_y(i) < 1.1) ...
+                        && (steering_angle(i) < 30)) ... % Changed from || to &&
+                    && ((brakepress(i) < 50) && (accel_x(i) < 0.4)) % Both New
+                    nextstate = 1;
+                end
             end
    end
    currentstate = nextstate;
