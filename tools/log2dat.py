@@ -22,7 +22,7 @@ def main(args):
 
     columns = number_duplicates(columns)
 
-    df = pd.read_csv(file_path, skiprows=1, names=columns, delimiter=',', na_values=['', ' '])
+    df = pd.read_csv(file_path, skiprows=1, names=columns, delimiter=',', na_values=['', ' '], on_bad_lines='warn')
 
     print(df.head())
     if args.output_file is not None:
