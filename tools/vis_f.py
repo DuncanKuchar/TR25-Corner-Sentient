@@ -10,7 +10,7 @@ from matplotlib.colors import ListedColormap, BoundaryNorm
 import os
 
 sensor_cols = ['AccelX', 'AccelY', 'TPS', 'Speed', 'FrontBP', 'SteerAng']
-state_colors = ['#1f77b4', '#ff7f0e', '#2ca02c']  # colors for states 0,1,2
+state_colors = ['#00FFFF', '#0000FF', '#FF00FF']  # colors for states 0,1,2
 
 def compute_states(gps):
     N = len(gps)
@@ -32,7 +32,8 @@ def compute_states(gps):
         TPS = gps.at[i, 'TPS']
         speed = gps.at[i, 'Speed']
         brakepress = gps.at[i, 'FrontBP']
-        steering_angle = gps.at[i, 'SteerAng']
+        # steering_angle = gps.at[i, 'SteerAng'] #TODO this is the CORRECT calculation
+        steering_angle = 0 #! this is a PLACEEHOLDER line while the steer angle sensor is getting fixed
         
         # Transition logic
         nextstate = currentstate
@@ -108,7 +109,7 @@ def main(args):
         ax.set_aspect('equal', 'box')
         ax.set_xlabel('East displacement (m) from Start')
         ax.set_ylabel('North displacement (m) from Start')
-        ax.set_title(f"{os.path.basename(run)}: UTC-based Speed Heatmap")
+        ax.set_title(f"{os.path.basename(run)}: FSM State Heatmap")
         ax.legend(loc='lower left', frameon=False)
 
         cbar = fig.colorbar(lc, ax=ax, ticks=[0.5,1.5,2.5])
