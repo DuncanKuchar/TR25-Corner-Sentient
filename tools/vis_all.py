@@ -104,6 +104,12 @@ def plot_all_metrics(run):
     lc.set_array(sp); ax.add_collection(lc)
     fig.colorbar(lc, ax=ax, label='mph')
     ax.set_title(titles[0])
+    # Mark start/end
+    ax.plot(0, 0, 'o', color='red', markersize=8, label='Start')
+    ax.plot(xs.iloc[-1], ys.iloc[-1], 'o', color='pink', markersize=8, label='End')
+    ax.legend(loc='lower left', frameon=False)
+
+
     # Accel
     ax = axes[0,1]
     ac = accel_smooth[1:]
@@ -112,14 +118,28 @@ def plot_all_metrics(run):
     lc.set_array(ac); ax.add_collection(lc)
     fig.colorbar(lc, ax=ax, label='m/s²')
     ax.set_title(titles[1])
+
+    # Mark start/end
+    ax.plot(0, 0, 'o', color='red', markersize=8, label='Start')
+    ax.plot(xs.iloc[-1], ys.iloc[-1], 'o', color='pink', markersize=8, label='End')
+    ax.legend(loc='lower left', frameon=False)
+
+
     # Curvature
     ax = axes[1,0]
     cm = curv_mag[1:]
     norm_cm = Normalize(vmin=0, vmax=np.nanpercentile(cm,95))
     lc = LineCollection(segs, cmap='viridis', norm=norm_cm, linewidth=4)
     lc.set_array(cm); ax.add_collection(lc)
+
+    # Mark start/end
+    ax.plot(0, 0, 'o', color='red', markersize=8, label='Start')
+    ax.plot(xs.iloc[-1], ys.iloc[-1], 'o', color='pink', markersize=8, label='End')
+    ax.legend(loc='lower left', frameon=False)
+
     fig.colorbar(lc, ax=ax, label='1/m')
     ax.set_title(titles[2])
+
     # FSM State
     ax = axes[1,1]
     st = states[1:]
@@ -130,6 +150,12 @@ def plot_all_metrics(run):
     cbar = fig.colorbar(lc, ax=ax, ticks=[0.5,1.5,2.5])
     cbar.set_ticklabels(['0','1','2']); cbar.set_label('State')
     ax.set_title(titles[3])
+
+    # Mark start/end
+    ax.plot(0, 0, 'o', color='red', markersize=8, label='Start')
+    ax.plot(xs.iloc[-1], ys.iloc[-1], 'o', color='pink', markersize=8, label='End')
+    ax.legend(loc='lower left', frameon=False)
+
     
     # common formatting
     for ax in axes.flat:

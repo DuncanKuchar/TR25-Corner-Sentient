@@ -41,26 +41,49 @@ def main(args):
 
     # Define bounding-box regions
     regions = {
-        'straight': [
+        'straight': [[
             (-50, -40), 
             (-10, -50), 
             (-20, 10)
-        ],
-        'hairpin': [
+        ]],
+        'hairpin': [[
             (5, -20), 
             (15, -20), 
             (15, -5), 
             (5, -5)
+        ]],
+        'slalom': [
+            [
+                (40, 30), 
+                (15, 25), 
+                (20, 40),
+                (-20, 22),
+                (20, 0)
+            ],
+            [
+                (0, -40), 
+                (40, -50), 
+                (30, 10)
+            ],
+
         ]
     }
 
-    region_paths = {name: Path(tupleSub(verts, (-origin_x, -origin_y))) for name, verts in regions.items()}
+    region_paths = {'example':[]}
+
+    for name, paths in regions.items():
+        for path in paths:
+            if region_paths.get(name) == None:
+                region_paths[name] = [Path(tupleSub(path, (-origin_x, -origin_y)))]
+            else:
+                region_paths[name].append(Path(tupleSub(path, (-origin_x, -origin_y))))
 
     all_gps['label'] = 'unlabeled'
 
-    for name, path in region_paths.items():
-        mask = path.contains_points(all_gps[['x', 'y']].values)
-        all_gps.loc[mask, 'label'] = name
+    for name, paths in region_paths.items():
+        for path in paths:
+            mask = path.contains_points(all_gps[['x', 'y']].values)
+            all_gps.loc[mask, 'label'] = name
 
     # Plot with axes labeled
     fig, ax = plt.subplots(figsize=(10,8))
@@ -80,9 +103,10 @@ def main(args):
                     s=5, c=color, label=region, alpha=0.4)
         scatters[region] = sc
         
-    for name, verts in regions.items():
-        poly = np.array(verts + [verts[0]])
-        plt.plot(poly[:,0], poly[:,1], linestyle='--', color= color_map[name], lw=2)
+    for name, paths in regions.items():
+        for verts in paths:
+            poly = np.array(verts + [verts[0]])
+            plt.plot(poly[:,0], poly[:,1], linestyle='--', color= color_map[name], lw=2)
     
     if args.output_folder is not None:
         if args.output_file.endswith('csv'):
